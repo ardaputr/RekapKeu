@@ -4,68 +4,123 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kelola Profil Admin</title>
+    <link rel="stylesheet" href="./style/produk.css" />
     <style>
-      /* style sama seperti sebelumnya */
+      /* Custom style khusus halaman profil admin */
       body {
-        font-family: Arial, sans-serif;
-        padding: 24px;
-        background: #f5f6fa;
+        background: #f8f9fb;
       }
       .card {
         max-width: 400px;
         background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+        padding: 30px 40px; /* tambah padding kiri-kanan lebih besar */
+        border-radius: 10px;
+        box-shadow: 0 2px 16px rgba(170, 180, 190, 0.07);
+        border: 1.3px solid #ebebf0;
+        margin: 36px auto;
+        font-family: "Segoe UI", Arial, sans-serif;
       }
       label {
         font-weight: 600;
         display: block;
-        margin: 12px 0 6px;
+        margin: 15px 0 6px 0; /* margin atas bawah, tanpa margin kiri */
       }
-      input {
+      input,
+      textarea {
         width: 100%;
-        padding: 8px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
+        padding: 8px 12px; /* beri padding horizontal lebih */
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-family: "Segoe UI", Arial, sans-serif;
+        box-sizing: border-box; /* supaya padding tidak melebar */
       }
       button {
-        margin-top: 20px;
-        background: #1976d2;
+        margin-top: 25px;
+        background: #6c5ce7;
         color: white;
-        padding: 10px 16px;
+        padding: 12px 20px; /* padding agak besar */
         border: none;
-        border-radius: 5px;
+        border-radius: 7px;
         cursor: pointer;
+        font-weight: 600;
+        font-family: "Segoe UI", Arial, sans-serif;
+        transition: background 0.16s;
+        width: 100%; /* tombol full lebar */
+      }
+      button:hover {
+        background: #4834d4;
       }
       button:disabled {
         background: #999;
         cursor: not-allowed;
       }
       .message {
-        margin-top: 16px;
+        margin-top: 20px;
+        font-size: 1rem;
+        text-align: center;
+      }
+      /* Container untuk isi halaman */
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
       }
     </style>
   </head>
   <body>
-    <h2>Kelola Profil Admin</h2>
-    <div class="card">
-      <label for="nameInput">Nama</label>
-      <input type="text" id="nameInput" placeholder="Nama lengkap" />
+    <div class="main-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <h2>RekapKeu</h2>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="pemasukan.html">Pemasukan</a></li>
+          <li><a href="pengeluaran.html">Pengeluaran</a></li>
+          <li><a href="produk.html">Produk</a></li>
+          <li><a href="karyawan.html">Karyawan</a></li>
+        </ul>
+      </div>
 
-      <label for="emailInput">Email</label>
-      <input type="email" id="emailInput" placeholder="Email" />
+      <!-- Main content -->
+      <div class="content">
+        <!-- Navbar -->
+        <div class="navbar">
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-avatar">AD</div>
+            <span class="profile-name">Admin</span>
+            <svg height="14" viewBox="0 0 24 24" width="14">
+              <path fill="#444" d="M7 10l5 5 5-5z"></path>
+            </svg>
+            <div class="profile-dropdown-content">
+              <a href="#" id="adminPageBtn">Profil</a>
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
+          </div>
+        </div>
 
-      <label for="passwordInput">Password (isi jika ingin ganti)</label>
-      <input
-        type="password"
-        id="passwordInput"
-        placeholder="Kosongkan jika tidak ganti"
-      />
+        <!-- Isi halaman profil -->
+        <div class="card">
+          <h2>Kelola Profil Admin</h2>
 
-      <button id="updateBtn">Update Profil</button>
+          <label for="nameInput">Nama</label>
+          <input type="text" id="nameInput" placeholder="Nama lengkap" />
 
-      <div class="message" id="message"></div>
+          <label for="emailInput">Email</label>
+          <input type="email" id="emailInput" placeholder="Email" />
+
+          <label for="passwordInput">Password (isi jika ingin ganti)</label>
+          <input
+            type="password"
+            id="passwordInput"
+            placeholder="Kosongkan jika tidak ganti"
+          />
+
+          <button id="updateBtn">Update Profil</button>
+
+          <div class="message" id="message"></div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -114,11 +169,29 @@
           });
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           const json = await res.json();
-          document.getElementById("nameInput").value = json.data.name || "";
-          document.getElementById("emailInput").value = json.data.email || "";
+          const name = json.data.name || "";
+          const email = json.data.email || "";
+
+          document.getElementById("nameInput").value = name;
+          document.getElementById("emailInput").value = email;
+
+          // Update navbar user info
+          document.querySelector(".profile-name").textContent = name || "User";
+
+          function getInitials(name) {
+            return name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+          }
+          document.querySelector(".profile-avatar").textContent =
+            getInitials(name);
         } catch (err) {
           document.getElementById("message").textContent =
             "Gagal ambil data user: " + err.message;
+          document.getElementById("message").style.color = "red";
         }
       }
 
@@ -164,6 +237,40 @@
         .addEventListener("click", updateUser);
 
       window.onload = fetchUser;
+
+      // Navbar dropdown
+      document.addEventListener("DOMContentLoaded", () => {
+        const dropdown = document.querySelector(".navbar .profile-dropdown");
+
+        dropdown.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle("active");
+        });
+
+        document.addEventListener("click", () => {
+          dropdown.classList.remove("active");
+        });
+
+        // Navigasi profil admin (tetap di halaman ini)
+        const adminPageBtn = document.getElementById("adminPageBtn");
+        if (adminPageBtn) {
+          adminPageBtn.onclick = function (e) {
+            e.preventDefault();
+            // Bisa tetap di halaman ini atau sesuaikan jika ada halaman lain
+            // window.location.href = "admin.html";
+          };
+        }
+
+        // Logout
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+          logoutBtn.onclick = function (e) {
+            e.preventDefault();
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+          };
+        }
+      });
     </script>
   </body>
 </html>

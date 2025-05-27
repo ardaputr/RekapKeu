@@ -59,16 +59,8 @@
               <label for="kontak">Kontak</label>
               <input type="text" id="kontak" name="kontak" />
             </div>
-            <div class="form-group">
-              <label for="user_id">User ID</label>
-              <input
-                type="number"
-                id="user_id"
-                name="user_id"
-                min="1"
-                required
-              />
-            </div>
+            <!-- user_id hidden -->
+            <input type="hidden" id="user_id" name="user_id" />
             <button type="submit" class="btn-tambah">
               Tambah / Update Karyawan
             </button>
@@ -92,16 +84,78 @@
         </div>
       </div>
     </div>
+
     <script>
       const BASE_URL = "http://localhost:5000/api";
 
+      // Ambil token dari localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Anda belum login, silakan login dulu.");
+        window.location.href = "login.html";
+      }
+
+      // Fungsi decode JWT untuk dapatkan data user
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const decoded = parseJwt(token);
+      if (!decoded) {
+        alert("Token tidak valid, silakan login ulang.");
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+      }
+
+      const loggedUserId = decoded.id;
+
+      // Set nama user dan inisial avatar di navbar
+      const userName = decoded.name || "User";
+      document.querySelector(".profile-name").textContent = userName;
+      function getInitials(name) {
+        return name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+      }
+      document.querySelector(".profile-avatar").textContent =
+        getInitials(userName);
+
+      // Set user_id hidden form sesuai login
+      document.getElementById("user_id").value = loggedUserId;
+
+      // Fetch semua karyawan tanpa filter user_id
       async function fetchEmployees() {
-        const userId = document.getElementById("user_id").value || 1;
-        const res = await fetch(`${BASE_URL}/employee?user_id=${userId}`);
+        const res = await fetch(`${BASE_URL}/employee`);
         const data = await res.json();
         const tbody = document.getElementById("employeeTableBody");
         tbody.innerHTML = "";
+
         (data.data || []).forEach((emp, idx) => {
+          let actionButtons = "";
+          if (emp.user_id === loggedUserId) {
+            actionButtons = `
+              <button class="btn-edit" data-id="${emp.id}">✏️</button>
+              <button class="btn-delete" data-id="${emp.id}">🗑️</button>
+            `;
+          } else {
+            actionButtons = "-";
+          }
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${idx + 1}</td>
@@ -110,22 +164,20 @@
             <td>${emp.alamat || "-"}</td>
             <td>${emp.umur || "-"}</td>
             <td>${emp.kontak || "-"}</td>
-            <td>
-              <button class="btn-edit" data-id="${emp.id}">✏️</button>
-              <button class="btn-delete" data-id="${emp.id}">🗑️</button>
-            </td>
+            <td>${actionButtons}</td>
           `;
           tbody.appendChild(tr);
         });
+
         attachActionButtons();
       }
 
+      // Pasang event tombol edit dan delete
       function attachActionButtons() {
         document.querySelectorAll(".btn-edit").forEach((btn) => {
           btn.onclick = async () => {
             const id = btn.getAttribute("data-id");
-            const userId = document.getElementById("user_id").value || 1;
-            const res = await fetch(`${BASE_URL}/employee?user_id=${userId}`);
+            const res = await fetch(`${BASE_URL}/employee`);
             const data = await res.json();
             const emp = data.data.find((item) => item.id == id);
             if (!emp) return alert("Data tidak ditemukan.");
@@ -136,6 +188,8 @@
             document.getElementById("alamat").value = emp.alamat || "";
             document.getElementById("umur").value = emp.umur || "";
             document.getElementById("kontak").value = emp.kontak || "";
+            // User id tetap sesuai pemilik data
+            document.getElementById("user_id").value = emp.user_id;
           };
         });
 
@@ -161,6 +215,7 @@
         });
       }
 
+      // Bersihkan form
       function clearForm() {
         document.getElementById("employeeId").value = "";
         document.getElementById("nama").value = "";
@@ -168,8 +223,11 @@
         document.getElementById("alamat").value = "";
         document.getElementById("umur").value = "";
         document.getElementById("kontak").value = "";
+        // Kembalikan user_id ke user yang login
+        document.getElementById("user_id").value = loggedUserId;
       }
 
+      // Submit tambah / update data
       document.getElementById("employeeForm").onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById("employeeId").value;
@@ -185,12 +243,14 @@
         try {
           let res;
           if (id) {
+            // Update (user_id tidak diubah supaya tetap milik user pemilik)
             res = await fetch(`${BASE_URL}/employee/${id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ nama, posisi, alamat, umur, kontak }),
             });
           } else {
+            // Create (sertakan user_id)
             res = await fetch(`${BASE_URL}/employee`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -222,29 +282,22 @@
         }
       };
 
-      document.getElementById("user_id").addEventListener("input", () => {
-        clearForm();
-        fetchEmployees();
-      });
-
+      // Load awal halaman
       document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("user_id").value = 1;
         fetchEmployees();
       });
 
-      // Dropdown navbar profile (klik, bukan hover) + Profil & Logout
+      // Dropdown navbar profile
       document.addEventListener("DOMContentLoaded", () => {
         const dropdown = document.querySelector(".navbar .profile-dropdown");
         dropdown.addEventListener("click", (e) => {
           e.stopPropagation();
           dropdown.classList.toggle("active");
         });
-
         document.addEventListener("click", () => {
           dropdown.classList.remove("active");
         });
 
-        // Profil ke halaman admin
         const adminPageBtn = document.getElementById("adminPageBtn");
         if (adminPageBtn) {
           adminPageBtn.onclick = function (e) {
@@ -252,12 +305,11 @@
             window.location.href = "admin.html";
           };
         }
-
-        // Logout
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) {
           logoutBtn.onclick = function (e) {
             e.preventDefault();
+            localStorage.removeItem("token");
             window.location.href = "login.html";
           };
         }
