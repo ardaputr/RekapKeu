@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kelola Profil Admin</title>
+    <style>
+      /* style sama seperti sebelumnya */
+      body {
+        font-family: Arial, sans-serif;
+        padding: 24px;
+        background: #f5f6fa;
+      }
+      .card {
+        max-width: 400px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+      }
+      label {
+        font-weight: 600;
+        display: block;
+        margin: 12px 0 6px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      button {
+        margin-top: 20px;
+        background: #1976d2;
+        color: white;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
+      .message {
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Kelola Profil Admin</h2>
+    <div class="card">
+      <label for="nameInput">Nama</label>
+      <input type="text" id="nameInput" placeholder="Nama lengkap" />
+
+      <label for="emailInput">Email</label>
+      <input type="email" id="emailInput" placeholder="Email" />
+
+      <label for="passwordInput">Password (isi jika ingin ganti)</label>
+      <input
+        type="password"
+        id="passwordInput"
+        placeholder="Kosongkan jika tidak ganti"
+      />
+
+      <button id="updateBtn">Update Profil</button>
+
+      <div class="message" id="message"></div>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:5000/api";
+
+      // Ambil token dari localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Anda belum login, silakan login dulu.");
+        window.location.href = "login.html";
+      }
+
+      // Fungsi decode JWT sederhana utk dapatkan userId
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map(function (c) {
+                return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+              })
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const decoded = parseJwt(token);
+      if (!decoded) {
+        alert("Token tidak valid, silakan login ulang.");
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+      }
+      const userId = decoded.id;
+
+      async function fetchUser() {
+        try {
+          const res = await fetch(`${BASE_URL}/user/${userId}`, {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          });
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          const json = await res.json();
+          document.getElementById("nameInput").value = json.data.name || "";
+          document.getElementById("emailInput").value = json.data.email || "";
+        } catch (err) {
+          document.getElementById("message").textContent =
+            "Gagal ambil data user: " + err.message;
+        }
+      }
+
+      async function updateUser() {
+        const name = document.getElementById("nameInput").value.trim();
+        const email = document.getElementById("emailInput").value.trim();
+        const password = document.getElementById("passwordInput").value;
+
+        if (!name || !email) {
+          showMessage("Nama dan email wajib diisi.", true);
+          return;
+        }
+
+        try {
+          const res = await fetch(`${BASE_URL}/user/${userId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const json = await res.json();
+          if (res.ok) {
+            showMessage("Profil berhasil diperbarui.", false);
+            document.getElementById("passwordInput").value = "";
+          } else {
+            showMessage(json.message || "Gagal memperbarui profil.", true);
+          }
+        } catch (err) {
+          showMessage("Error server: " + err.message, true);
+        }
+      }
+
+      function showMessage(msg, isError) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = msg;
+        messageDiv.style.color = isError ? "red" : "green";
+      }
+
+      document
+        .getElementById("updateBtn")
+        .addEventListener("click", updateUser);
+
+      window.onload = fetchUser;
+    </script>
+  </body>
+</html>

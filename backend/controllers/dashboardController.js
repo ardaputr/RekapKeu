@@ -8,30 +8,34 @@ const { Op } = require('sequelize');
 exports.getSummary = async (req, res) => {
   try {
     const user_id = req.query.user_id;
-    if (!user_id) return res.status(400).json({ message: "user_id wajib" });
-
     const today = new Date().toISOString().slice(0, 10);
 
-    // Pendapatan hari ini
-    const incomeToday = await Income.sum('jumlah', { where: { user_id, tanggal: today } }) || 0;
+    // Jika user_id tidak diberikan, hitung summary global tanpa filter user_id
+    const incomeToday = user_id
+      ? (await Income.sum('jumlah', { where: { user_id, tanggal: today } })) || 0
+      : (await Income.sum('jumlah', { where: { tanggal: today } })) || 0;
 
-    // Total pendapatan
-    const totalIncome = await Income.sum('jumlah', { where: { user_id } }) || 0;
+    const totalIncome = user_id
+      ? (await Income.sum('jumlah', { where: { user_id } })) || 0
+      : (await Income.sum('jumlah')) || 0;
 
-    // Pengeluaran hari ini
-    const expenseToday = await Expense.sum('jumlah', { where: { user_id, tanggal: today } }) || 0;
+    const expenseToday = user_id
+      ? (await Expense.sum('jumlah', { where: { user_id, tanggal: today } })) || 0
+      : (await Expense.sum('jumlah', { where: { tanggal: today } })) || 0;
 
-    // Total pengeluaran
-    const totalExpense = await Expense.sum('jumlah', { where: { user_id } }) || 0;
+    const totalExpense = user_id
+      ? (await Expense.sum('jumlah', { where: { user_id } })) || 0
+      : (await Expense.sum('jumlah')) || 0;
 
-    // Sisa uang
     const saldo = totalIncome - totalExpense;
 
-    // Total produk
-    const totalProducts = await Product.count({ where: { user_id } });
+    const totalProducts = user_id
+      ? await Product.count({ where: { user_id } })
+      : await Product.count();
 
-    // Jumlah karyawan
-    const totalEmployees = await Employee.count({ where: { user_id } });
+    const totalEmployees = user_id
+      ? await Employee.count({ where: { user_id } })
+      : await Employee.count();
 
     res.json({
       incomeToday,
@@ -40,7 +44,7 @@ exports.getSummary = async (req, res) => {
       totalExpense,
       saldo,
       totalProducts,
-      totalEmployees
+      totalEmployees,
     });
   } catch (err) {
     res.status(500).json({ message: "Gagal mengambil ringkasan", error: err.message });

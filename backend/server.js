@@ -26,7 +26,8 @@ sequelize.sync()
   });
 
 // Routing untuk register & login
-app.use('/', userRoutes);
+// app.use('/', userRoutes);
+app.use('/api', userRoutes);
 // Routing untuk income (pemasukan)
 app.use('/api', incomeRoutes);
 // Routing untuk expense (pengeluaran)
