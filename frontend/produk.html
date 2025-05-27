@@ -36,6 +36,7 @@
             </div>
           </div>
         </div>
+
         <!-- Container -->
         <div class="container">
           <h2>Pencatatan Produk</h2>
@@ -57,16 +58,8 @@
               <label for="foto">Foto Produk</label>
               <input type="file" id="foto" name="foto" accept="image/*" />
             </div>
-            <div class="form-group">
-              <label for="user_id">User ID</label>
-              <input
-                type="number"
-                id="user_id"
-                name="user_id"
-                min="1"
-                required
-              />
-            </div>
+            <!-- user_id disembunyikan -->
+            <input type="hidden" id="user_id" name="user_id" />
             <button type="submit" class="btn-tambah">
               Tambah / Update Produk
             </button>
@@ -89,19 +82,83 @@
         </div>
       </div>
     </div>
+
     <script>
       const BASE_URL = "http://localhost:5000/api";
 
+      // Ambil token dari localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Anda belum login, silakan login dulu.");
+        window.location.href = "login.html";
+      }
+
+      // Decode JWT untuk dapatkan data user
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const decoded = parseJwt(token);
+      if (!decoded) {
+        alert("Token tidak valid, silakan login ulang.");
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+      }
+
+      // Simpan userId login
+      const loggedUserId = decoded.id;
+
+      // Set nama user dan inisial avatar di navbar
+      const userName = decoded.name || "User";
+      document.querySelector(".profile-name").textContent = userName;
+      function getInitials(name) {
+        return name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+      }
+      document.querySelector(".profile-avatar").textContent =
+        getInitials(userName);
+
+      // Set user_id di form sesuai user login
+      document.getElementById("user_id").value = loggedUserId;
+
+      // Fetch semua produk (tanpa filter user_id)
       async function fetchProducts() {
-        const userId = document.getElementById("user_id").value || 1;
-        const res = await fetch(`${BASE_URL}/product?user_id=${userId}`);
+        const res = await fetch(`${BASE_URL}/product`);
         const data = await res.json();
         const tbody = document.getElementById("productTableBody");
         tbody.innerHTML = "";
+
         (data.data || []).forEach((product, idx) => {
+          let actionButtons = "";
+          if (product.user_id === loggedUserId) {
+            actionButtons = `
+              <button class="btn-edit" data-id="${product.id}">✏️</button>
+              <button class="btn-delete" data-id="${product.id}">🗑️</button>
+            `;
+          } else {
+            actionButtons = "-";
+          }
+
           const fotoSrc = product.foto
             ? `http://localhost:5000/uploads/${product.foto}`
             : "";
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${idx + 1}</td>
@@ -109,26 +166,22 @@
             <td>Rp ${Number(product.harga).toLocaleString()}</td>
             <td>${product.deskripsi || "-"}</td>
             <td>${
-              fotoSrc
-                ? `<img src="${fotoSrc}" alt="Foto Produk" style="max-width:100px; max-height:80px;" />`
-                : "-"
+              fotoSrc ? `<img src="${fotoSrc}" alt="Foto Produk" />` : "-"
             }</td>
-            <td>
-              <button class="btn-edit" data-id="${product.id}">✏️</button>
-              <button class="btn-delete" data-id="${product.id}">🗑️</button>
-            </td>
+            <td>${actionButtons}</td>
           `;
           tbody.appendChild(tr);
         });
+
         attachActionButtons();
       }
 
+      // Event tombol edit dan delete
       function attachActionButtons() {
         document.querySelectorAll(".btn-edit").forEach((btn) => {
           btn.onclick = async () => {
             const id = btn.getAttribute("data-id");
-            const userId = document.getElementById("user_id").value || 1;
-            const res = await fetch(`${BASE_URL}/product?user_id=${userId}`);
+            const res = await fetch(`${BASE_URL}/product`);
             const data = await res.json();
             const product = data.data.find((item) => item.id == id);
             if (!product) return alert("Data tidak ditemukan.");
@@ -139,6 +192,8 @@
             document.getElementById("deskripsi").value =
               product.deskripsi || "";
             // Tidak bisa set ulang input file
+            // User id tetap hidden
+            document.getElementById("user_id").value = product.user_id;
           };
         });
 
@@ -164,35 +219,41 @@
         });
       }
 
+      // Clear form
       function clearForm() {
         document.getElementById("productId").value = "";
         document.getElementById("nama_produk").value = "";
         document.getElementById("harga").value = "";
         document.getElementById("deskripsi").value = "";
         document.getElementById("foto").value = "";
+        document.getElementById("user_id").value = loggedUserId;
       }
 
+      // Submit tambah/update produk
       document.getElementById("productForm").onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById("productId").value;
         const form = e.target;
         const formData = new FormData(form);
 
+        // Pastikan user_id dalam formData sesuai user login
+        formData.set("user_id", loggedUserId);
+
         let res;
-        let result;
         if (id) {
-          // Untuk update, endpoint PUT, body FormData (upload foto jika diubah)
+          // Update
           res = await fetch(`${BASE_URL}/product/${id}`, {
             method: "PUT",
             body: formData,
           });
         } else {
+          // Create
           res = await fetch(`${BASE_URL}/product`, {
             method: "POST",
             body: formData,
           });
         }
-        result = await res.json();
+        const result = await res.json();
         const formMsg = document.getElementById("formMessage");
         if (res.ok) {
           formMsg.style.color = "green";
@@ -209,28 +270,22 @@
         }
       };
 
-      document
-        .getElementById("user_id")
-        .addEventListener("input", fetchProducts);
-
+      // Load awal halaman
       document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("user_id").value = 1;
         fetchProducts();
       });
 
-      // Dropdown navbar profile (klik, bukan hover)
+      // Dropdown navbar profile
       document.addEventListener("DOMContentLoaded", () => {
         const dropdown = document.querySelector(".navbar .profile-dropdown");
         dropdown.addEventListener("click", (e) => {
           e.stopPropagation();
           dropdown.classList.toggle("active");
         });
-
         document.addEventListener("click", () => {
           dropdown.classList.remove("active");
         });
 
-        // Profil/Logout navigation
         const adminPageBtn = document.getElementById("adminPageBtn");
         if (adminPageBtn) {
           adminPageBtn.onclick = function (e) {
@@ -238,11 +293,11 @@
             window.location.href = "admin.html";
           };
         }
-
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) {
           logoutBtn.onclick = function (e) {
             e.preventDefault();
+            localStorage.removeItem("token");
             window.location.href = "login.html";
           };
         }

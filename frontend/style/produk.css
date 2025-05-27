@@ -154,6 +154,32 @@ h2 {
 .btn-tambah:hover {
   background: #4834d4;
 }
+.btn-edit {
+  background: #6c5ce7; /* warna biru tombol edit */
+  border: none;
+  border-radius: 7px; /* radius yang kamu inginkan */
+  color: #fff;
+  padding: 8px 12px; /* padding pas */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: background 0.16s;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 600;
+  margin: 0 6px 0 0;
+}
+
+.btn-edit:hover {
+  background: #284ecb; /* hover lebih gelap */
+}
+
+.btn-edit svg {
+  margin-right: 6px; /* jarak ikon sedikit lebih longgar */
+  fill: white; /* pastikan ikon putih */
+}
+
 .form-group {
   margin-bottom: 10px;
 }

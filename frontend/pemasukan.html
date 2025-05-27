@@ -38,6 +38,10 @@
         align-items: center;
         cursor: pointer;
       }
+      /* Sembunyikan input user_id */
+      #user_id {
+        display: none;
+      }
     </style>
   </head>
 
@@ -86,10 +90,8 @@
               <label for="jumlah">Jumlah (Rp)</label>
               <input type="number" id="jumlah" required min="1" />
             </div>
-            <div class="form-group">
-              <label for="user_id">User ID</label>
-              <input type="number" id="user_id" required min="1" />
-            </div>
+            <!-- User ID disembunyikan, diisi otomatis dari token -->
+            <input type="hidden" id="user_id" />
             <button type="submit" class="btn-tambah" style="margin-bottom: 0">
               Tambah / Update Pemasukan
             </button>
@@ -147,6 +149,9 @@
         window.location.href = "login.html";
       }
 
+      // Simpan userId login
+      const loggedUserId = decoded.id;
+
       // Set nama user dan inisial avatar di navbar
       const userName = decoded.name || "User";
       document.querySelector(".profile-name").textContent = userName;
@@ -162,42 +167,47 @@
         getInitials(userName);
 
       // Set user_id di form sesuai id login
-      document.getElementById("user_id").value = decoded.id;
+      document.getElementById("user_id").value = loggedUserId;
 
-      // Fungsi fetch pemasukan user sesuai user_id form
+      // Fungsi fetch pemasukan semua user (tanpa filter user_id)
       async function fetchIncomes() {
-        const userId = document.getElementById("user_id").value || decoded.id;
-        const res = await fetch(`${BASE_URL}/income?user_id=${userId}`);
+        const res = await fetch(`${BASE_URL}/income`);
         const data = await res.json();
         const tbody = document.getElementById("incomeTableBody");
         tbody.innerHTML = "";
+
         (data.data || []).forEach((income, idx) => {
+          let actionButtons = "";
+          // Tampilkan tombol hanya jika user_id sama dengan user login
+          if (income.user_id === loggedUserId) {
+            actionButtons = `
+          <button class="btn-edit" data-id="${income.id}">✏️</button>
+          <button class="btn-delete" data-id="${income.id}">🗑️</button>
+        `;
+          } else {
+            actionButtons = "-"; // Bisa juga kosong: "" atau pesan lain
+          }
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td>${income.sumber}</td>
-            <td>${income.tanggal}</td>
-            <td>Rp ${Number(income.jumlah).toLocaleString()}</td>
-            <td>
-              <button class="btn-edit" data-id="${income.id}">✏️</button>
-              <button class="btn-delete" data-id="${income.id}">🗑️</button>
-            </td>
-          `;
+        <td>${idx + 1}</td>
+        <td>${income.sumber}</td>
+        <td>${income.tanggal}</td>
+        <td>Rp ${Number(income.jumlah).toLocaleString()}</td>
+        <td>${actionButtons}</td>
+      `;
           tbody.appendChild(tr);
         });
+
         attachActionButtons();
       }
 
-      // Event tombol edit dan delete
+      // Event tombol edit dan delete, hanya untuk tombol yang ada (user yang boleh edit)
       function attachActionButtons() {
         document.querySelectorAll(".btn-edit").forEach((btn) => {
           btn.onclick = async () => {
             const id = btn.getAttribute("data-id");
-            const res = await fetch(
-              `${BASE_URL}/income?user_id=${
-                document.getElementById("user_id").value
-              }`
-            );
+            const res = await fetch(`${BASE_URL}/income`);
             const data = await res.json();
             const income = data.data.find((item) => item.id == id);
             if (!income) return alert("Data tidak ditemukan.");
@@ -206,6 +216,7 @@
             document.getElementById("sumber").value = income.sumber;
             document.getElementById("tanggal").value = income.tanggal;
             document.getElementById("jumlah").value = income.jumlah;
+            document.getElementById("user_id").value = income.user_id; // tetap user_id data asli
           };
         });
 
@@ -237,6 +248,8 @@
         document.getElementById("sumber").value = "";
         document.getElementById("tanggal").value = "";
         document.getElementById("jumlah").value = "";
+        // User_id tetap diisi sesuai login, tidak dihapus
+        document.getElementById("user_id").value = loggedUserId;
       }
 
       // Submit tambah/update pemasukan
@@ -253,12 +266,14 @@
         try {
           let res;
           if (id) {
+            // Update (user_id tidak diupdate agar tidak berubah owner)
             res = await fetch(`${BASE_URL}/income/${id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ sumber, tanggal, jumlah }),
             });
           } else {
+            // Create, sertakan user_id dari login
             res = await fetch(`${BASE_URL}/income`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -282,15 +297,6 @@
           formMsg.innerText = "Error server.";
         }
       };
-
-      // User ID input di form gak perlu diubah user, jadi bisa disable atau hidden jika ingin:
-      // document.getElementById("user_id").disabled = true;
-
-      // Jika user_id berubah, reload daftar pemasukan (opsional)
-      document.getElementById("user_id").addEventListener("input", () => {
-        clearForm();
-        fetchIncomes();
-      });
 
       // Load awal halaman
       document.addEventListener("DOMContentLoaded", () => {

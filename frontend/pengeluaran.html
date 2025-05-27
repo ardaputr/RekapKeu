@@ -5,6 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pencatatan Pengeluaran</title>
     <link rel="stylesheet" href="./style/pengeluaran.css" />
+    <style>
+      /* Tambahkan CSS berikut jika belum ada di file pengeluaran.css */
+      .profile-dropdown .profile-dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 48px;
+        background: #fff;
+        min-width: 120px;
+        box-shadow: 0 6px 24px rgba(80, 80, 90, 0.11);
+        border-radius: 6px;
+        overflow: hidden;
+        z-index: 100;
+      }
+      .profile-dropdown.active .profile-dropdown-content {
+        display: block;
+      }
+      .profile-dropdown-content a {
+        display: block;
+        padding: 10px 16px;
+        color: #333;
+        text-decoration: none;
+        transition: background 0.13s;
+      }
+      .profile-dropdown-content a:hover {
+        background: #f4f6fb;
+      }
+      .navbar .profile-dropdown {
+        position: relative;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      /* Sembunyikan input user_id */
+      #user_id {
+        display: none;
+      }
+    </style>
   </head>
 
   <body>
@@ -20,6 +58,7 @@
         </ul>
       </div>
       <div class="content">
+        <!-- Navbar -->
         <div class="navbar">
           <div class="profile-dropdown" id="profileDropdown">
             <div class="profile-avatar">AD</div>
@@ -33,6 +72,8 @@
             </div>
           </div>
         </div>
+
+        <!-- Form Pengeluaran -->
         <div class="container">
           <h2>Pencatatan Pengeluaran</h2>
           <form id="expenseForm">
@@ -49,15 +90,14 @@
               <label for="jumlah">Jumlah (Rp)</label>
               <input type="number" id="jumlah" required min="1" />
             </div>
-            <div class="form-group">
-              <label for="user_id">User ID</label>
-              <input type="number" id="user_id" required min="1" />
-            </div>
+            <!-- User ID disembunyikan dan otomatis diisi -->
+            <input type="hidden" id="user_id" />
             <button type="submit" class="btn-tambah">
               Tambah / Update Pengeluaran
             </button>
           </form>
           <div id="formMessage"></div>
+
           <h3 style="color: #d35400; margin-top: 30px">Daftar Pengeluaran</h3>
           <table>
             <thead>
@@ -78,38 +118,95 @@
     <script>
       const BASE_URL = "http://localhost:5000/api";
 
+      // Ambil token dari localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Anda belum login, silakan login dulu.");
+        window.location.href = "login.html";
+      }
+
+      // Decode JWT untuk dapatkan data user
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const decoded = parseJwt(token);
+      if (!decoded) {
+        alert("Token tidak valid, silakan login ulang.");
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+      }
+
+      // Simpan userId login
+      const loggedUserId = decoded.id;
+
+      // Set nama user dan inisial avatar di navbar
+      const userName = decoded.name || "User";
+      document.querySelector(".profile-name").textContent = userName;
+      function getInitials(name) {
+        return name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+      }
+      document.querySelector(".profile-avatar").textContent =
+        getInitials(userName);
+
+      // Set user_id di form sesuai user login
+      document.getElementById("user_id").value = loggedUserId;
+
+      // Fetch semua pengeluaran (tanpa filter user_id)
       async function fetchExpenses() {
-        const userId = document.getElementById("user_id").value || 1;
-        const res = await fetch(`${BASE_URL}/expense?user_id=${userId}`);
+        const res = await fetch(`${BASE_URL}/expense`);
         const data = await res.json();
         const tbody = document.getElementById("expenseTableBody");
         tbody.innerHTML = "";
+
         (data.data || []).forEach((expense, idx) => {
+          let actionButtons = "";
+          if (expense.user_id === loggedUserId) {
+            actionButtons = `
+              <button class="btn-edit" data-id="${expense.id}">✏️</button>
+              <button class="btn-delete" data-id="${expense.id}">🗑️</button>
+            `;
+          } else {
+            actionButtons = "-";
+          }
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${expense.sumber}</td>
             <td>${expense.tanggal}</td>
             <td>Rp ${Number(expense.jumlah).toLocaleString()}</td>
-            <td>
-              <button class="btn-edit" data-id="${expense.id}">✏️</button>
-              <button class="btn-delete" data-id="${expense.id}">🗑️</button>
-            </td>
+            <td>${actionButtons}</td>
           `;
           tbody.appendChild(tr);
         });
+
         attachActionButtons();
       }
 
+      // Event tombol edit dan delete
       function attachActionButtons() {
         document.querySelectorAll(".btn-edit").forEach((btn) => {
           btn.onclick = async () => {
             const id = btn.getAttribute("data-id");
-            const res = await fetch(
-              `${BASE_URL}/expense?user_id=${
-                document.getElementById("user_id").value
-              }`
-            );
+            const res = await fetch(`${BASE_URL}/expense`);
             const data = await res.json();
             const expense = data.data.find((item) => item.id == id);
             if (!expense) return alert("Data tidak ditemukan.");
@@ -118,6 +215,7 @@
             document.getElementById("sumber").value = expense.sumber;
             document.getElementById("tanggal").value = expense.tanggal;
             document.getElementById("jumlah").value = expense.jumlah;
+            document.getElementById("user_id").value = expense.user_id; // tetap user_id asli
           };
         });
 
@@ -143,13 +241,16 @@
         });
       }
 
+      // Clear form
       function clearForm() {
         document.getElementById("expenseId").value = "";
         document.getElementById("sumber").value = "";
         document.getElementById("tanggal").value = "";
         document.getElementById("jumlah").value = "";
+        document.getElementById("user_id").value = loggedUserId;
       }
 
+      // Submit tambah/update pengeluaran
       document.getElementById("expenseForm").onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById("expenseId").value;
@@ -193,17 +294,12 @@
         }
       };
 
-      document.getElementById("user_id").addEventListener("input", () => {
-        clearForm();
-        fetchExpenses();
-      });
-
+      // Load awal halaman
       document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("user_id").value = 1;
         fetchExpenses();
       });
 
-      // Dropdown profile & logout
+      // Dropdown navbar profile
       document.addEventListener("DOMContentLoaded", () => {
         const dropdown = document.querySelector(".navbar .profile-dropdown");
 
@@ -228,6 +324,7 @@
         if (logoutBtn) {
           logoutBtn.onclick = function (e) {
             e.preventDefault();
+            localStorage.removeItem("token");
             window.location.href = "login.html";
           };
         }
