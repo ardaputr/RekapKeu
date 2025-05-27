@@ -1,0 +1,214 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f8f9fb;
+}
+.main-container {
+  display: flex;
+  min-height: 100vh;
+}
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #fff;
+  border-right: 1.5px solid #eaeaea;
+  padding: 32px 0 32px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sidebar h2 {
+  font-size: 1.2rem;
+  color: #2081e2;
+  margin-bottom: 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+.sidebar ul li {
+  padding: 12px 32px;
+  color: #222;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 10px 0 0 10px;
+  transition: background 0.18s;
+}
+.sidebar ul li.active,
+.sidebar ul li:hover {
+  background: #e8f0fe;
+  color: #2081e2;
+  font-weight: 600;
+}
+.sidebar ul li a {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  height: 100%;
+}
+.sidebar ul li a:visited {
+  color: inherit;
+}
+.sidebar ul li.active a {
+  color: #2081e2;
+  font-weight: 600;
+}
+/* Navbar */
+.navbar {
+  height: 60px;
+  background: #fff;
+  border-bottom: 1.5px solid #eaeaea;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 36px;
+}
+.navbar .profile-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.navbar .profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #b5d0fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2081e2;
+  font-weight: bold;
+  margin-right: 8px;
+}
+.navbar .profile-name {
+  font-size: 1rem;
+  margin-right: 8px;
+  color: #444;
+}
+.navbar .profile-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 48px;
+  background: #fff;
+  min-width: 120px;
+  box-shadow: 0 6px 24px rgba(80, 80, 90, 0.11);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+}
+.navbar .profile-dropdown.active .profile-dropdown-content {
+  display: block;
+}
+.navbar .profile-dropdown-content a {
+  display: block;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.13s;
+}
+.navbar .profile-dropdown-content a:hover {
+  background: #f4f6fb;
+}
+/* Content */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.container {
+  max-width: 1100px;
+  margin: 36px auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(170, 180, 190, 0.07);
+  border: 1.3px solid #ebebf0;
+}
+h2 {
+  color: #6c5ce7;
+  margin-top: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+.btn-tambah {
+  display: inline-block;
+  background: #6c5ce7;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 5px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.16s;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+.btn-tambah:hover {
+  background: #4834d4;
+}
+.form-group {
+  margin-bottom: 10px;
+}
+label {
+  display: block;
+  margin-bottom: 3px;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+input,
+textarea {
+  padding: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 25px;
+  background: #fff;
+}
+th,
+td {
+  border: 1px solid #dfe6e9;
+  padding: 10px 8px;
+  text-align: center;
+  vertical-align: middle;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+th {
+  background: #eae7fd;
+  color: #6c5ce7;
+  font-weight: 600;
+}
+img {
+  max-width: 100px;
+  max-height: 80px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(120, 130, 190, 0.06);
+}
+#formMessage {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+@media (max-width: 900px) {
+  .container {
+    padding: 10px;
+  }
+  .sidebar {
+    width: 65px;
+  }
+  .sidebar h2,
+  .sidebar ul li {
+    display: none;
+  }
+}

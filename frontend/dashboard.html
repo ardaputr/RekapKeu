@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="./style/dashboard.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <h2>RekapKeu</h2>
+        <ul>
+          <li class="active"><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="pemasukan.html">Pemasukan</a></li>
+          <li><a href="pengeluaran.html">Pengeluaran</a></li>
+          <li><a href="produk.html">Produk</a></li>
+          <li><a href="karyawan.html">Karyawan</a></li>
+        </ul>
+      </div>
+      <!-- Main Content Area -->
+      <div class="content">
+        <!-- Navbar -->
+        <div class="navbar">
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-avatar">AD</div>
+            <span class="profile-name">Admin</span>
+            <svg height="14" viewBox="0 0 24 24" width="14">
+              <path fill="#444" d="M7 10l5 5 5-5z"></path>
+            </svg>
+            <div class="profile-dropdown-content">
+              <a href="#" id="adminPageBtn">Profil</a>
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
+          </div>
+        </div>
+        <!-- Dashboard Summary -->
+        <div class="dashboard-summary">
+          <center><div class="dashboard-title">Dashboard RekapKeu</div></center>
+          <div class="card-grid" id="summaryContainer">Loading...</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const BASE_URL = "http://localhost:5000/api";
+      async function fetchSummary() {
+        const userId = 1; // Bisa diganti dari session/login
+        const res = await fetch(
+          `${BASE_URL}/dashboard-summary?user_id=${userId}`
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          document.getElementById("summaryContainer").innerText =
+            "Gagal mengambil data.";
+          return;
+        }
+        // Card list sesuai dashboard
+        const html = `
+        <div class="card income">
+          <div class="card-label">Pendapatan (Hari Ini)</div>
+          <div class="card-value">Rp ${data.incomeToday.toLocaleString()}</div>
+        </div>
+        <div class="card income">
+          <div class="card-label">Total Pendapatan</div>
+          <div class="card-value">Rp ${data.totalIncome.toLocaleString()}</div>
+        </div>
+        <div class="card expense">
+          <div class="card-label">Pengeluaran (Hari Ini)</div>
+          <div class="card-value">Rp ${data.expenseToday.toLocaleString()}</div>
+        </div>
+        <div class="card expense">
+          <div class="card-label">Total Pengeluaran</div>
+          <div class="card-value">Rp ${data.totalExpense.toLocaleString()}</div>
+        </div>
+        <div class="card balance">
+          <div class="card-label">Sisa Uang</div>
+          <div class="card-value">Rp ${data.saldo.toLocaleString()}</div>
+        </div>
+        <div class="card products">
+          <div class="card-label">Total Produk</div>
+          <div class="card-value">${data.totalProducts}</div>
+        </div>
+        <div class="card employees">
+          <div class="card-label">Karyawan</div>
+          <div class="card-value">${data.totalEmployees}</div>
+        </div>
+      `;
+        document.getElementById("summaryContainer").innerHTML = html;
+      }
+
+      fetchSummary();
+
+      // Dropdown navbar profile (klik, bukan hover)
+      document.addEventListener("DOMContentLoaded", () => {
+        const dropdown = document.querySelector(".navbar .profile-dropdown");
+
+        dropdown.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle("active");
+        });
+
+        document.addEventListener("click", () => {
+          dropdown.classList.remove("active");
+        });
+
+        // Klik Profil ke halaman Kelola Admin
+        document.getElementById("adminPageBtn").onclick = function (e) {
+          e.preventDefault();
+          window.location.href = "admin.html";
+        };
+
+        // Logout
+        document.getElementById("logoutBtn").onclick = function (e) {
+          e.preventDefault();
+          window.location.href = "login.html";
+        };
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pencatatan Pengeluaran</title>
+    <link rel="stylesheet" href="./style/pengeluaran.css" />
+  </head>
+
+  <body>
+    <div class="main-container">
+      <div class="sidebar">
+        <h2>RekapKeu</h2>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="pemasukan.html">Pemasukan</a></li>
+          <li class="active"><a href="pengeluaran.html">Pengeluaran</a></li>
+          <li><a href="produk.html">Produk</a></li>
+          <li><a href="karyawan.html">Karyawan</a></li>
+        </ul>
+      </div>
+      <div class="content">
+        <div class="navbar">
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-avatar">AD</div>
+            <span class="profile-name">Admin</span>
+            <svg height="14" viewBox="0 0 24 24" width="14">
+              <path fill="#444" d="M7 10l5 5 5-5z"></path>
+            </svg>
+            <div class="profile-dropdown-content">
+              <a href="#" id="adminPageBtn">Profil</a>
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <h2>Pencatatan Pengeluaran</h2>
+          <form id="expenseForm">
+            <input type="hidden" id="expenseId" />
+            <div class="form-group">
+              <label for="sumber">Sumber Pengeluaran</label>
+              <input type="text" id="sumber" required />
+            </div>
+            <div class="form-group">
+              <label for="tanggal">Tanggal</label>
+              <input type="date" id="tanggal" required />
+            </div>
+            <div class="form-group">
+              <label for="jumlah">Jumlah (Rp)</label>
+              <input type="number" id="jumlah" required min="1" />
+            </div>
+            <div class="form-group">
+              <label for="user_id">User ID</label>
+              <input type="number" id="user_id" required min="1" />
+            </div>
+            <button type="submit" class="btn-tambah">
+              Tambah / Update Pengeluaran
+            </button>
+          </form>
+          <div id="formMessage"></div>
+          <h3 style="color: #d35400; margin-top: 30px">Daftar Pengeluaran</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Sumber</th>
+                <th>Tanggal</th>
+                <th>Jumlah</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="expenseTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:5000/api";
+
+      async function fetchExpenses() {
+        const userId = document.getElementById("user_id").value || 1;
+        const res = await fetch(`${BASE_URL}/expense?user_id=${userId}`);
+        const data = await res.json();
+        const tbody = document.getElementById("expenseTableBody");
+        tbody.innerHTML = "";
+        (data.data || []).forEach((expense, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${expense.sumber}</td>
+            <td>${expense.tanggal}</td>
+            <td>Rp ${Number(expense.jumlah).toLocaleString()}</td>
+            <td>
+              <button class="btn-edit" data-id="${expense.id}">✏️</button>
+              <button class="btn-delete" data-id="${expense.id}">🗑️</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        attachActionButtons();
+      }
+
+      function attachActionButtons() {
+        document.querySelectorAll(".btn-edit").forEach((btn) => {
+          btn.onclick = async () => {
+            const id = btn.getAttribute("data-id");
+            const res = await fetch(
+              `${BASE_URL}/expense?user_id=${
+                document.getElementById("user_id").value
+              }`
+            );
+            const data = await res.json();
+            const expense = data.data.find((item) => item.id == id);
+            if (!expense) return alert("Data tidak ditemukan.");
+
+            document.getElementById("expenseId").value = expense.id;
+            document.getElementById("sumber").value = expense.sumber;
+            document.getElementById("tanggal").value = expense.tanggal;
+            document.getElementById("jumlah").value = expense.jumlah;
+          };
+        });
+
+        document.querySelectorAll(".btn-delete").forEach((btn) => {
+          btn.onclick = async () => {
+            const id = btn.getAttribute("data-id");
+            if (!confirm("Yakin ingin menghapus pengeluaran ini?")) return;
+            try {
+              const res = await fetch(`${BASE_URL}/expense/${id}`, {
+                method: "DELETE",
+              });
+              if (res.ok) {
+                alert("Data pengeluaran berhasil dihapus.");
+                fetchExpenses();
+                clearForm();
+              } else {
+                alert("Gagal menghapus data.");
+              }
+            } catch {
+              alert("Error saat menghapus data.");
+            }
+          };
+        });
+      }
+
+      function clearForm() {
+        document.getElementById("expenseId").value = "";
+        document.getElementById("sumber").value = "";
+        document.getElementById("tanggal").value = "";
+        document.getElementById("jumlah").value = "";
+      }
+
+      document.getElementById("expenseForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("expenseId").value;
+        const sumber = document.getElementById("sumber").value;
+        const tanggal = document.getElementById("tanggal").value;
+        const jumlah = document.getElementById("jumlah").value;
+        const user_id = document.getElementById("user_id").value;
+
+        const formMsg = document.getElementById("formMessage");
+
+        try {
+          let res;
+          if (id) {
+            res = await fetch(`${BASE_URL}/expense/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sumber, tanggal, jumlah }),
+            });
+          } else {
+            res = await fetch(`${BASE_URL}/expense`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sumber, tanggal, jumlah, user_id }),
+            });
+          }
+          const result = await res.json();
+          if (res.ok) {
+            formMsg.style.color = "green";
+            formMsg.innerText = id
+              ? "Data berhasil diperbarui."
+              : "Pengeluaran berhasil ditambah!";
+            fetchExpenses();
+            clearForm();
+          } else {
+            formMsg.style.color = "red";
+            formMsg.innerText = result.message || "Gagal simpan data.";
+          }
+        } catch (err) {
+          formMsg.style.color = "red";
+          formMsg.innerText = "Error server.";
+        }
+      };
+
+      document.getElementById("user_id").addEventListener("input", () => {
+        clearForm();
+        fetchExpenses();
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("user_id").value = 1;
+        fetchExpenses();
+      });
+
+      // Dropdown profile & logout
+      document.addEventListener("DOMContentLoaded", () => {
+        const dropdown = document.querySelector(".navbar .profile-dropdown");
+
+        dropdown.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle("active");
+        });
+
+        document.addEventListener("click", () => {
+          dropdown.classList.remove("active");
+        });
+
+        const adminPageBtn = document.getElementById("adminPageBtn");
+        if (adminPageBtn) {
+          adminPageBtn.onclick = function (e) {
+            e.preventDefault();
+            window.location.href = "admin.html";
+          };
+        }
+
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+          logoutBtn.onclick = function (e) {
+            e.preventDefault();
+            window.location.href = "login.html";
+          };
+        }
+      });
+    </script>
+  </body>
+</html>

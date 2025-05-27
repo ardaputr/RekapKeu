@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pencatatan Karyawan</title>
+    <link rel="stylesheet" href="./style/karyawan.css" />
+  </head>
+
+  <body>
+    <div class="main-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <h2>RekapKeu</h2>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="pemasukan.html">Pemasukan</a></li>
+          <li><a href="pengeluaran.html">Pengeluaran</a></li>
+          <li><a href="produk.html">Produk</a></li>
+          <li class="active"><a href="karyawan.html">Karyawan</a></li>
+        </ul>
+      </div>
+      <!-- Main Content -->
+      <div class="content">
+        <div class="navbar">
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-avatar">AD</div>
+            <span class="profile-name">Admin</span>
+            <svg height="14" viewBox="0 0 24 24" width="14">
+              <path fill="#444" d="M7 10l5 5 5-5z"></path>
+            </svg>
+            <div class="profile-dropdown-content">
+              <a href="#" id="adminPageBtn">Profil</a>
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <h2>Pencatatan Karyawan</h2>
+          <form id="employeeForm">
+            <input type="hidden" id="employeeId" />
+            <div class="form-group">
+              <label for="nama">Nama</label>
+              <input type="text" id="nama" name="nama" required />
+            </div>
+            <div class="form-group">
+              <label for="posisi">Posisi</label>
+              <input type="text" id="posisi" name="posisi" required />
+            </div>
+            <div class="form-group">
+              <label for="alamat">Alamat</label>
+              <textarea id="alamat" name="alamat" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="umur">Umur</label>
+              <input type="number" id="umur" name="umur" min="1" />
+            </div>
+            <div class="form-group">
+              <label for="kontak">Kontak</label>
+              <input type="text" id="kontak" name="kontak" />
+            </div>
+            <div class="form-group">
+              <label for="user_id">User ID</label>
+              <input
+                type="number"
+                id="user_id"
+                name="user_id"
+                min="1"
+                required
+              />
+            </div>
+            <button type="submit" class="btn-tambah">
+              Tambah / Update Karyawan
+            </button>
+          </form>
+          <div id="formMessage"></div>
+          <h3 style="color: #00b894; margin-top: 30px">Daftar Karyawan</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Posisi</th>
+                <th>Alamat</th>
+                <th>Umur</th>
+                <th>Kontak</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="employeeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      const BASE_URL = "http://localhost:5000/api";
+
+      async function fetchEmployees() {
+        const userId = document.getElementById("user_id").value || 1;
+        const res = await fetch(`${BASE_URL}/employee?user_id=${userId}`);
+        const data = await res.json();
+        const tbody = document.getElementById("employeeTableBody");
+        tbody.innerHTML = "";
+        (data.data || []).forEach((emp, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${emp.nama}</td>
+            <td>${emp.posisi}</td>
+            <td>${emp.alamat || "-"}</td>
+            <td>${emp.umur || "-"}</td>
+            <td>${emp.kontak || "-"}</td>
+            <td>
+              <button class="btn-edit" data-id="${emp.id}">✏️</button>
+              <button class="btn-delete" data-id="${emp.id}">🗑️</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        attachActionButtons();
+      }
+
+      function attachActionButtons() {
+        document.querySelectorAll(".btn-edit").forEach((btn) => {
+          btn.onclick = async () => {
+            const id = btn.getAttribute("data-id");
+            const userId = document.getElementById("user_id").value || 1;
+            const res = await fetch(`${BASE_URL}/employee?user_id=${userId}`);
+            const data = await res.json();
+            const emp = data.data.find((item) => item.id == id);
+            if (!emp) return alert("Data tidak ditemukan.");
+
+            document.getElementById("employeeId").value = emp.id;
+            document.getElementById("nama").value = emp.nama;
+            document.getElementById("posisi").value = emp.posisi;
+            document.getElementById("alamat").value = emp.alamat || "";
+            document.getElementById("umur").value = emp.umur || "";
+            document.getElementById("kontak").value = emp.kontak || "";
+          };
+        });
+
+        document.querySelectorAll(".btn-delete").forEach((btn) => {
+          btn.onclick = async () => {
+            const id = btn.getAttribute("data-id");
+            if (!confirm("Yakin ingin menghapus karyawan ini?")) return;
+            try {
+              const res = await fetch(`${BASE_URL}/employee/${id}`, {
+                method: "DELETE",
+              });
+              if (res.ok) {
+                alert("Data karyawan berhasil dihapus.");
+                fetchEmployees();
+                clearForm();
+              } else {
+                alert("Gagal menghapus data.");
+              }
+            } catch {
+              alert("Error saat menghapus data.");
+            }
+          };
+        });
+      }
+
+      function clearForm() {
+        document.getElementById("employeeId").value = "";
+        document.getElementById("nama").value = "";
+        document.getElementById("posisi").value = "";
+        document.getElementById("alamat").value = "";
+        document.getElementById("umur").value = "";
+        document.getElementById("kontak").value = "";
+      }
+
+      document.getElementById("employeeForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("employeeId").value;
+        const nama = document.getElementById("nama").value;
+        const posisi = document.getElementById("posisi").value;
+        const alamat = document.getElementById("alamat").value;
+        const umur = document.getElementById("umur").value;
+        const kontak = document.getElementById("kontak").value;
+        const user_id = document.getElementById("user_id").value;
+
+        const formMsg = document.getElementById("formMessage");
+
+        try {
+          let res;
+          if (id) {
+            res = await fetch(`${BASE_URL}/employee/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nama, posisi, alamat, umur, kontak }),
+            });
+          } else {
+            res = await fetch(`${BASE_URL}/employee`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                nama,
+                posisi,
+                alamat,
+                umur,
+                kontak,
+                user_id,
+              }),
+            });
+          }
+          const result = await res.json();
+          if (res.ok) {
+            formMsg.style.color = "green";
+            formMsg.innerText = id
+              ? "Data berhasil diperbarui."
+              : "Karyawan berhasil ditambah!";
+            fetchEmployees();
+            clearForm();
+          } else {
+            formMsg.style.color = "red";
+            formMsg.innerText = result.message || "Gagal simpan data.";
+          }
+        } catch (err) {
+          formMsg.style.color = "red";
+          formMsg.innerText = "Error server.";
+        }
+      };
+
+      document.getElementById("user_id").addEventListener("input", () => {
+        clearForm();
+        fetchEmployees();
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("user_id").value = 1;
+        fetchEmployees();
+      });
+
+      // Dropdown navbar profile (klik, bukan hover) + Profil & Logout
+      document.addEventListener("DOMContentLoaded", () => {
+        const dropdown = document.querySelector(".navbar .profile-dropdown");
+        dropdown.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle("active");
+        });
+
+        document.addEventListener("click", () => {
+          dropdown.classList.remove("active");
+        });
+
+        // Profil ke halaman admin
+        const adminPageBtn = document.getElementById("adminPageBtn");
+        if (adminPageBtn) {
+          adminPageBtn.onclick = function (e) {
+            e.preventDefault();
+            window.location.href = "admin.html";
+          };
+        }
+
+        // Logout
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+          logoutBtn.onclick = function (e) {
+            e.preventDefault();
+            window.location.href = "login.html";
+          };
+        }
+      });
+    </script>
+  </body>
+</html>
