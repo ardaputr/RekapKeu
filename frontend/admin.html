@@ -66,6 +66,25 @@
         flex-direction: column;
         min-width: 0;
       }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        background-color: #f1f1f1;
+      }
+      button {
+        margin-top: 5px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
@@ -120,6 +139,14 @@
 
           <div class="message" id="message"></div>
         </div>
+
+        <!-- Daftar User -->
+        <div class="card" id="userTableCard" style="margin-top: 16px">
+          <h2>Daftar Semua User</h2>
+          <div id="usersTableContainer">
+            <p>Memuat data...</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -160,6 +187,15 @@
       }
       const userId = decoded.id;
 
+      // Cek apakah user adalah admin (id = 1)
+      if (userId === 1) {
+        loadAllUsers(); // Jika admin, muat semua user
+      } else {
+        // Jika bukan admin, sembunyikan tabel
+        document.getElementById("userTableCard").style.display = "none";
+      }
+
+      // Fetch user data
       async function fetchUser() {
         try {
           const res = await fetch(`${BASE_URL}/user/${userId}`, {
@@ -195,6 +231,7 @@
         }
       }
 
+      // Update user
       async function updateUser() {
         const name = document.getElementById("nameInput").value.trim();
         const email = document.getElementById("emailInput").value.trim();
@@ -251,16 +288,6 @@
           dropdown.classList.remove("active");
         });
 
-        // Navigasi profil admin (tetap di halaman ini)
-        const adminPageBtn = document.getElementById("adminPageBtn");
-        if (adminPageBtn) {
-          adminPageBtn.onclick = function (e) {
-            e.preventDefault();
-            // Bisa tetap di halaman ini atau sesuaikan jika ada halaman lain
-            // window.location.href = "admin.html";
-          };
-        }
-
         // Logout
         const logoutBtn = document.getElementById("logoutBtn");
         if (logoutBtn) {
@@ -271,6 +298,92 @@
           };
         }
       });
+
+      // Load all users
+      async function loadAllUsers() {
+        const container = document.getElementById("usersTableContainer");
+        container.innerHTML = "<p>Memuat data...</p>";
+        try {
+          const res = await fetch(`${BASE_URL}/users`, {
+            headers: { Authorization: "Bearer " + token },
+          });
+          if (!res.ok) throw new Error("Gagal ambil data user");
+          const { data } = await res.json();
+          // Generate tabel
+          let html = `<table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <th>ID</th><th>Nama</th><th>Email</th><th>Aksi</th>
+        </tr>`;
+          data.forEach((user) => {
+            html += `<tr>
+          <td>${user.id}</td>
+          <td contenteditable="true" data-uid="${user.id}" data-field="name">${user.name}</td>
+          <td contenteditable="true" data-uid="${user.id}" data-field="email">${user.email}</td>
+          <td>
+            <button onclick="editUser(${user.id})">Simpan</button>
+            <button onclick="deleteUser(${user.id})" style="background:#e74c3c;">Hapus</button>
+          </td>
+        </tr>`;
+          });
+          html += `</table>
+      <small>Klik pada kolom nama/email untuk edit. Tekan "Simpan" setelah selesai.</small>`;
+          container.innerHTML = html;
+        } catch (err) {
+          container.innerHTML = `<p style="color:red;">${err.message}</p>`;
+        }
+      }
+
+      // Edit user dari tabel
+      window.editUser = async function (userId) {
+        const nameCell = document.querySelector(
+          `[data-uid="${userId}"][data-field="name"]`
+        );
+        const emailCell = document.querySelector(
+          `[data-uid="${userId}"][data-field="email"]`
+        );
+        const name = nameCell.textContent.trim();
+        const email = emailCell.textContent.trim();
+        // Bisa tambahkan konfirmasi
+        try {
+          const res = await fetch(`${BASE_URL}/user/${userId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ name, email }),
+          });
+          const json = await res.json();
+          if (res.ok) {
+            alert("User berhasil diupdate");
+            loadAllUsers();
+          } else {
+            alert(json.message || "Gagal update user");
+          }
+        } catch (err) {
+          alert("Error: " + err.message);
+        }
+      };
+
+      // Hapus user
+      window.deleteUser = async function (userId) {
+        if (!confirm("Yakin ingin menghapus user ini?")) return;
+        try {
+          const res = await fetch(`${BASE_URL}/user/${userId}`, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + token },
+          });
+          const json = await res.json();
+          if (res.ok) {
+            alert("User dihapus!");
+            loadAllUsers();
+          } else {
+            alert(json.message || "Gagal hapus user");
+          }
+        } catch (err) {
+          alert("Error: " + err.message);
+        }
+      };
     </script>
   </body>
 </html>

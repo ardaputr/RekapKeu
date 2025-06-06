@@ -123,77 +123,75 @@ body {
   flex-direction: column;
   min-width: 0;
 }
+
+/* Container form */
 .container {
-  max-width: 1100px;
+  max-width: 600px;
   margin: 36px auto;
-  padding: 24px;
+  padding: 32px 40px; /* padding kiri-kanan sama dengan pemasukan.css */
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 16px rgba(170, 180, 190, 0.07);
   border: 1.3px solid #ebebf0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
+
 h2 {
   color: #d35400;
   margin-top: 0;
   font-family: "Segoe UI", Arial, sans-serif;
 }
+
+.form-group {
+  margin-bottom: 14px; /* jarak antar form group disamakan */
+}
+
+label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px; /* jarak label ke input */
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 8px 12px; /* padding input sama */
+  border-radius: 5px; /* border radius sama */
+  border: 1px solid #ddd;
+  font-family: "Segoe UI", Arial, sans-serif;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
 .btn-tambah {
   display: inline-block;
   background: #d35400;
   color: #fff;
   font-weight: bold;
   border-radius: 5px;
-  padding: 8px 18px;
+  padding: 10px 18px;
   font-size: 1rem;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   border: none;
   cursor: pointer;
   transition: background 0.16s;
   font-family: "Segoe UI", Arial, sans-serif;
+  width: 100%;
 }
+
 .btn-tambah svg {
   vertical-align: middle;
   margin-right: 7px;
   margin-top: -2px;
 }
+
 .btn-tambah:hover {
   background: #a84300;
 }
-.form-group {
-  margin-bottom: 10px;
-}
-label {
-  display: block;
-  margin-bottom: 3px;
-  font-family: "Segoe UI", Arial, sans-serif;
-}
-input,
-select {
-  padding: 6px;
-  width: 100%;
-  margin-bottom: 6px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  font-family: "Segoe UI", Arial, sans-serif;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 25px;
-  background: #fff;
-}
-th,
-td {
-  border: 1px solid #dfe6e9;
-  padding: 10px 8px;
-  text-align: center;
-  font-family: "Segoe UI", Arial, sans-serif;
-}
-th {
-  background: #ffeaa7;
-  color: #d35400;
-  font-weight: 600;
-}
+
 .btn-edit {
   background: #d35400;
   border: none;
@@ -207,16 +205,46 @@ th {
   transition: background 0.16s;
   font-family: "Segoe UI", Arial, sans-serif;
 }
+
 .btn-edit:hover {
   background: #a84300;
 }
+
 .btn-edit svg {
-  margin-right: 4px;
+  margin-right: 6px;
 }
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 25px;
+  background: #fff;
+}
+th,
+td {
+  border: 1px solid #dfe6e9;
+  padding: 10px 8px;
+  text-align: center;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 1rem;
+}
+th {
+  background: #ffeaa7;
+  color: #d35400;
+  font-weight: 600;
+}
+
+/* Hide user_id input */
+#user_id {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .container {
-    padding: 10px;
+    padding: 16px;
+    margin: 16px 12px;
   }
   .sidebar {
     width: 65px;

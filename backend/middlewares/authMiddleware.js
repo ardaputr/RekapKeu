@@ -15,7 +15,7 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    req.user = decoded; // simpan data user hasil decode di req.user
+    req.user = decoded; 
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Token tidak valid atau kadaluarsa' });

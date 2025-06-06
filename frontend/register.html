@@ -1,52 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Register</title>
-</head>
-<body>
-  <h2>Register</h2>
-  <form id="registerForm">
-    <label>Nama</label>
-    <input type="text" id="regName" required>
-    <label>Email</label>
-    <input type="email" id="regEmail" required>
-    <label>Password</label>
-    <input type="password" id="regPassword" required>
-    <button type="submit">Register</button>
-  </form>
-  <div id="regMessage"></div>
-  <p>Sudah punya akun? <a href="login.html">Login di sini</a></p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Register</title>
+  </head>
+  <body>
+    <h2>Register</h2>
+    <form id="registerForm">
+      <label>Nama</label>
+      <input type="text" id="regName" required />
+      <label>Email</label>
+      <input type="email" id="regEmail" required />
+      <label>Password</label>
+      <input type="password" id="regPassword" required />
+      <button type="submit">Register</button>
+    </form>
+    <div id="regMessage"></div>
+    <p>Sudah punya akun? <a href="login.html">Login di sini</a></p>
 
-  <script>
-    const BASE_URL = "http://localhost:5000"; // ganti jika endpoint berbeda
+    <script>
+      const BASE_URL = "http://localhost:5000/api";
 
-    document.getElementById('registerForm').onsubmit = async function(e) {
-      e.preventDefault();
-      const name = document.getElementById('regName').value;
-      const email = document.getElementById('regEmail').value;
-      const password = document.getElementById('regPassword').value;
+      document.getElementById("registerForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const name = document.getElementById("regName").value;
+        const email = document.getElementById("regEmail").value;
+        const password = document.getElementById("regPassword").value;
 
-      try {
-        const res = await fetch(`${BASE_URL}/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById('regMessage').style.color = "green";
-          document.getElementById('regMessage').innerText = "Registrasi berhasil! Silakan login.";
-          setTimeout(() => window.location.href = 'login.html', 1800);
-        } else {
-          document.getElementById('regMessage').style.color = "red";
-          document.getElementById('regMessage').innerText = data.message || "Registrasi gagal.";
+        try {
+          const res = await fetch(`${BASE_URL}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            document.getElementById("regMessage").style.color = "green";
+            document.getElementById("regMessage").innerText =
+              "Registrasi berhasil! Silakan login.";
+            setTimeout(() => (window.location.href = "login.html"), 1800);
+          } else {
+            document.getElementById("regMessage").style.color = "red";
+            document.getElementById("regMessage").innerText =
+              data.message || "Registrasi gagal.";
+          }
+        } catch (err) {
+          document.getElementById("regMessage").style.color = "red";
+          document.getElementById("regMessage").innerText =
+            "Terjadi error server.";
         }
-      } catch (err) {
-        document.getElementById('regMessage').style.color = "red";
-        document.getElementById('regMessage').innerText = "Terjadi error server.";
-      }
-    }
-  </script>
-</body>
+      };
+    </script>
+  </body>
 </html>
