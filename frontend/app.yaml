@@ -2,8 +2,8 @@ runtime: python39
 
 handlers:
   - url: /.*
-    static_files: frontend/dashboard.html
-    upload: frontend/dashboard.html
+    static_files: dashboard.html
+    upload: dashboard.html
 
   - url: /style/(.*)
     static_files: /style/\1
