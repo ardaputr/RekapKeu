@@ -59,7 +59,8 @@
     </div>
 
     <script>
-      const BASE_URL = "http://localhost:5000/api";
+      const BASE_URL =
+        "https://rekapkeu-rekapkeube-525057870643.us-central1.run.app/api";
 
       // Ambil token dari localStorage
       const token = localStorage.getItem("token");
@@ -118,7 +119,7 @@
 
         (data.data || []).forEach((product, idx) => {
           const fotoSrc = product.foto
-            ? `http://localhost:5000/uploads/${product.foto}`
+            ? `https://rekapkeu-rekapkeube-525057870643.us-central1.run.app/uploads/${product.foto}`
             : "";
 
           const tr = document.createElement("tr");
