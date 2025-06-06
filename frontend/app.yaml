@@ -1,40 +1,10 @@
 runtime: python39
 
 handlers:
-  # Menyajikan file HTML spesifik
-  - url: /
-    static_files: dashboard.html
-    upload: dashboard.html
+  - url: /.*
+    static_files: frontend/dashboard.html
+    upload: frontend/dashboard.html
 
-  - url: /
-    static_files: karyawan.html
-    upload: karyawan.html
-
-  - url: /
-    static_files: login.html
-    upload: login.html
-
-  - url: /
-    static_files: pemasukan.html
-    upload: pemasukan.html
-
-  - url: /
-    static_files: pengeluaran.html
-    upload: pengeluaran.html
-
-  - url: /
-    static_files: produk.html
-    upload: produk.html
-
-  - url: /
-    static_files: produkList.html
-    upload: produkList.html
-
-  - url: /
-    static_files: register.html
-    upload: register.html
-
-  # Menyajikan file statis lainnya di dalam folder 'style'
   - url: /style/(.*)
     static_files: /style/\1
     upload: /style/(.*)
