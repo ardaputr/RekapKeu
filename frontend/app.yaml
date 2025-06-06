@@ -36,5 +36,5 @@ handlers:
 
   # Menyajikan file statis lainnya di dalam folder 'style'
   - url: /style/(.*)
-    static_files: frontend/style/\1
-    upload: frontend/style/(.*)
+    static_files: /style/\1
+    upload: /style/(.*)
