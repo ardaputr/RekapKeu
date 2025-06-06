@@ -1,20 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Login</title>
+    <style>
+      /* Global Styles */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f1f1f1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      /* Form Container */
+      form {
+        background-color: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 2rem;
+      }
+
+      label {
+        font-size: 16px;
+        color: #34495e;
+        margin-bottom: 8px;
+        display: block;
+        text-align: left;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 16px;
+        color: #34495e;
+        box-sizing: border-box;
+      }
+
+      input:focus {
+        border-color: #3498db;
+        outline: none;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      /* Message Styles */
+      #loginMessage {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 16px;
+      }
+
+      #loginMessage.green {
+        color: green;
+      }
+
+      #loginMessage.red {
+        color: red;
+      }
+
+      /* Link Styling */
+      p {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+      }
+
+      a {
+        color: #3498db;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 600px) {
+        form {
+          padding: 20px;
+          width: 90%;
+        }
+
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+
+      /* Show/Hide password styles */
+      .toggle-password {
+        font-size: 14px;
+        color: #3498db;
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+      }
+
+      /* Input container to hold password and toggle */
+      .password-container {
+        position: relative;
+      }
+
+      /* Error and success message styles */
+      .error-message,
+      .success-message {
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .error-message {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .success-message {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+    </style>
   </head>
   <body>
-    <h2>Login</h2>
-    <form id="loginForm">
-      <label>Email</label>
-      <input type="email" id="loginEmail" required />
-      <label>Password</label>
-      <input type="password" id="loginPassword" required />
-      <button type="submit">Login</button>
-    </form>
-    <div id="loginMessage"></div>
-    <p>Belum punya akun? <a href="register.html">Register di sini</a></p>
+    <div>
+      <form id="loginForm">
+        <h2>Login</h2>
+        <label for="loginEmail">Email</label>
+        <input
+          type="email"
+          id="loginEmail"
+          required
+          placeholder="Masukkan email"
+        />
+
+        <label for="loginPassword">Password</label>
+        <div class="password-container">
+          <input
+            type="password"
+            id="loginPassword"
+            required
+            placeholder="Masukkan password"
+          />
+          <span id="togglePassword" class="toggle-password">Show</span>
+        </div>
+
+        <button type="submit">Login</button>
+
+        <!-- Error and Success Messages -->
+        <div id="loginMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Belum punya akun? Register di sini -->
+        <p>Belum punya akun? <a href="register.html">Register di sini</a></p>
+      </form>
+    </div>
 
     <script>
       const BASE_URL = "http://localhost:5000/api";
@@ -32,22 +205,38 @@
           });
           const data = await res.json();
           if (res.ok) {
-            document.getElementById("loginMessage").style.color = "green";
-            document.getElementById("loginMessage").innerText =
+            document.getElementById("loginMessage").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+            document.getElementById("successMessage").innerText =
               "Login berhasil!";
             if (data.token) localStorage.setItem("token", data.token);
             setTimeout(() => (window.location.href = "dashboard.html"), 1800);
           } else {
-            document.getElementById("loginMessage").style.color = "red";
+            document.getElementById("successMessage").style.display = "none";
+            document.getElementById("loginMessage").style.display = "block";
             document.getElementById("loginMessage").innerText =
               data.message || "Login gagal.";
           }
         } catch (err) {
-          document.getElementById("loginMessage").style.color = "red";
+          document.getElementById("loginMessage").style.display = "block";
           document.getElementById("loginMessage").innerText =
             "Terjadi error server.";
+          document.getElementById("successMessage").style.display = "none";
         }
       };
+
+      // Show/Hide password functionality
+      const togglePassword = document.getElementById("togglePassword");
+      const passwordInput = document.getElementById("loginPassword");
+
+      togglePassword.addEventListener("click", function () {
+        // Toggle password visibility
+        const type = passwordInput.type === "password" ? "text" : "password";
+        passwordInput.type = type;
+
+        // Change button text based on visibility
+        togglePassword.textContent = type === "password" ? "Show" : "Hide";
+      });
     </script>
   </body>
 </html>
