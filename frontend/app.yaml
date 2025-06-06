@@ -1,0 +1,40 @@
+runtime: python39
+
+handlers:
+  # Menyajikan file HTML spesifik
+  - url: /dashboard.html
+    static_files: frontend/dashboard.html
+    upload: frontend/dashboard.html
+
+  - url: /karyawan.html
+    static_files: frontend/karyawan.html
+    upload: frontend/karyawan.html
+
+  - url: /login.html
+    static_files: frontend/login.html
+    upload: frontend/login.html
+
+  - url: /pemasukan.html
+    static_files: frontend/pemasukan.html
+    upload: frontend/pemasukan.html
+
+  - url: /pengeluaran.html
+    static_files: frontend/pengeluaran.html
+    upload: frontend/pengeluaran.html
+
+  - url: /produk.html
+    static_files: frontend/produk.html
+    upload: frontend/produk.html
+
+  - url: /produkList.html
+    static_files: frontend/produkList.html
+    upload: frontend/produkList.html
+
+  - url: /register.html
+    static_files: frontend/register.html
+    upload: frontend/register.html
+
+  # Menyajikan file statis lainnya di dalam folder 'style'
+  - url: /style/(.*)
+    static_files: frontend/style/\1
+    upload: frontend/style/(.*)
